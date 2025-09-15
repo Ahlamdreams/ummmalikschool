@@ -86,7 +86,7 @@
                 <button onclick="showPasswordModal()" class="nav-btn bg-purple-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-600 transition-colors">
                     ⚙️ إدارة النظام
                 </button>
-        </div>
+            </div>
         </div>
     </nav>
 
@@ -109,7 +109,7 @@
                     <div class="text-2xl font-bold text-orange-600" id="lateCount">0</div>
                     <div class="text-sm text-gray-600">متأخرات</div>
                 </div>
-        </div>
+            </div>
         </div>
     </div>
 
@@ -448,6 +448,7 @@
                         <button onclick="clearTable()" class="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600">
                             🗑️ مسح الجدول
                         </button>
+                    </div>
                 </div>
                 
                 <div class="overflow-x-auto border rounded-lg">
@@ -675,7 +676,6 @@
             const grid = document.getElementById('classesGrid');
             grid.innerHTML = '';
            
-            // Show welcome message if no classes
             if (classes.length === 0) {
                 grid.innerHTML = `
                     <div class="col-span-full text-center py-16">
@@ -714,7 +714,6 @@
                                             class="w-6 h-6 rounded-full text-xs ${i <= classItem.ratings.quiet ? 'bg-yellow-400' : 'bg-gray-200'}">
                                         ⭐
                                     </button>
-                                `).join('')}
                             </div>
                         </div>
                        
@@ -747,7 +746,6 @@
                                     <button onclick="updateRating(${classItem.id}, 'noise', ${i})" 
                                             class="w-6 h-6 rounded-full text-xs ${i <= classItem.ratings.noise ? 'bg-red-400' : 'bg-gray-200'}">
                                         🔊
-                                    </button>
                             </div>
                         </div>
                        
@@ -758,8 +756,8 @@
                                     <button onclick="updateRating(${classItem.id}, 'cleanliness', ${i})" 
                                             class="w-6 h-6 rounded-full text-xs ${i <= classItem.ratings.cleanliness ? 'bg-purple-400' : 'bg-gray-200'}">
                                         ✨
-                                    </button>
                             </div>
+                        </div>
                     </div>
                    
                     <div class="flex gap-2">
@@ -834,6 +832,7 @@
                 const oldStatus = teacher.status;
                 teacher.status = status;
                
+                // Award points based on status
                 if (status === 'present' && oldStatus !== 'present') {
                     teacher.dailyPoints += 5;
                     teacher.monthlyPoints += 5;
@@ -844,6 +843,7 @@
                     teacher.dailyPoints += 3;
                     teacher.monthlyPoints += 3;
                 } else if (status === 'absent') {
+                    // Reset daily points for absent teachers
                     teacher.dailyPoints = 0;
                 }
                
@@ -942,7 +942,7 @@
             if (classItem) {
                 const totalRating = Object.values(classItem.ratings).reduce((sum, rating) => sum + rating, 0);
                 classItem.dailyPoints = totalRating;
-                classItem.monthlyPoints = totalRating; // Updated logic
+                classItem.monthlyPoints = totalRating;
             }
         }
 
@@ -952,12 +952,12 @@
             const absent = teachers.filter(t => t.status === 'absent').length;
             const excused = teachers.filter(t => t.status === 'excused').length;
             const late = teachers.filter(t => t.status === 'late').length;
-            
+           
             document.getElementById('presentCount').textContent = present;
             document.getElementById('absentCount').textContent = absent;
             document.getElementById('excusedCount').textContent = excused;
             document.getElementById('lateCount').textContent = late;
-            
+           
             updateTeachersListByStatus();
         }
         
@@ -968,7 +968,7 @@
         function updateTeachersListByStatus() {
             const presentTeachers = teachers.filter(t => t.status === 'present');
             const presentContainer = document.getElementById('presentTeachersNames');
-            
+           
             if (presentTeachers.length === 0) {
                 presentContainer.innerHTML = '<p class="text-gray-500 text-center text-xs">لا يوجد</p>';
             } else {
@@ -978,10 +978,10 @@
                     </span>`
                 ).join('');
             }
-            
+           
             const lateTeachers = teachers.filter(t => t.status === 'late');
             const lateContainer = document.getElementById('lateTeachersNames');
-            
+           
             if (lateTeachers.length === 0) {
                 lateContainer.innerHTML = '<p class="text-gray-500 text-center text-xs">لا يوجد</p>';
             } else {
@@ -991,10 +991,10 @@
                     </span>`
                 ).join('');
             }
-            
+           
             const excusedTeachers = teachers.filter(t => t.status === 'excused');
             const excusedContainer = document.getElementById('excusedTeachersNames');
-            
+           
             if (excusedTeachers.length === 0) {
                 excusedContainer.innerHTML = '<p class="text-gray-500 text-center text-xs">لا يوجد</p>';
             } else {
@@ -1004,10 +1004,10 @@
                     </span>`
                 ).join('');
             }
-            
+           
             const absentTeachers = teachers.filter(t => t.status === 'absent');
             const absentContainer = document.getElementById('absentTeachersNames');
-            
+           
             if (absentTeachers.length === 0) {
                 absentContainer.innerHTML = '<p class="text-gray-500 text-center text-xs">لا يوجد</p>';
             } else {
@@ -1223,7 +1223,6 @@
         function capturePhoto() {
             const video = document.getElementById('cameraVideo');
             const canvas = document.getElementById('cameraCanvas');
-            const ctx = canvas.getContext('2d');
            
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
@@ -1314,18 +1313,15 @@
                                 const { error: insertClassesError } = await supabase.from('classes').insert(classesToInsertData);
                                 if (insertClassesError) throw insertClassesError;
                             }
-
+                           
                             if (teachersAddedCount > 0 || uniqueClassesToInsert.length > 0) {
                                 await loadData();
                                 renderTeachers();
                                 renderClasses();
                                 updateStatistics();
                                 updateStars();
-                               
                                 closeModal('bulkAddModal');
-                               
                                 alert(`🎉 تم إضافة البيانات وحفظها بنجاح!\n\n👩‍🏫 المعلمات المضافة: ${teachersAddedCount}\n🏫 الصفوف الجديدة: ${uniqueClassesToInsert.length}\n\n💾 البيانات محفوظة بشكل دائم ولن تختفي!\n\n✨ يمكنك الآن رؤية المعلمات في قسم "حضور المعلمات"`);
-                               
                                 showSection('teachers');
                             } else {
                                 alert('⚠️ لم يتم إضافة أي معلمات جديدة!\n\n💡 تأكد من عدم وجود معلمات مكررة في الملف.');
@@ -1333,140 +1329,137 @@
                         } else {
                             alert('❌ لم يتم العثور على أعمدة "اسم المعلمة" و"الصف" في الملف.');
                         }
-                    } else {
-                        alert('❌ ملف Excel فارغ.');
+                    } catch (error) {
+                        console.error('خطأ في Excel:', error);
+                        alert('❌ حدث خطأ أثناء معالجة ملف Excel. يرجى التحقق من تنسيق الملف.');
                     }
-                } catch (error) {
-                    console.error('خطأ في Excel:', error);
-                    alert('❌ حدث خطأ أثناء معالجة ملف Excel. يرجى التحقق من تنسيق الملف.');
-                }
-            };
-            reader.readAsArrayBuffer(file);
-        }
-
-        // Certificate generation
-        function generateDailyCertificate() {
-            if (classes.length === 0) {
-                alert('لا توجد صفوف لإنشاء شهادة');
-                return;
-            }
-            const winner = classes.reduce((prev, current) => 
-                (prev.dailyPoints > current.dailyPoints) ? prev : current
-            );
-            generateCertificate(winner.name, 'نجم الطابور لهذا اليوم');
-        }
-
-        function generateMonthlyCertificate() {
-            if (classes.length === 0) {
-                alert('لا توجد صفوف لإنشاء شهادة');
-                return;
-            }
-            const winner = classes.reduce((prev, current) => 
-                (prev.monthlyPoints > current.monthlyPoints) ? prev : current
-            );
-            generateCertificate(winner.name, 'نجم الطابور لهذا الشهر');
-        }
-
-        function generateTeacherCertificate() {
-            if (teachers.length === 0) {
-                alert('لا توجد معلمات لإنشاء شهادة');
-                return;
-            }
-            const winner = teachers.reduce((prev, current) => 
-                (prev.monthlyPoints > current.monthlyPoints) ? prev : current
-            );
-            generateCertificate(winner.name, 'المعلمة المثالية');
-        }
-
-        function generateCertificate(name, title) {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = 800;
-            canvas.height = 600;
-            
-            const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-            gradient.addColorStop(0, '#667eea');
-            gradient.addColorStop(1, '#764ba2');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            ctx.fillStyle = 'white';
-            ctx.fillRect(50, 50, canvas.width - 100, canvas.height - 100);
-            
-            ctx.strokeStyle = '#667eea';
-            ctx.lineWidth = 5;
-            ctx.strokeRect(50, 50, canvas.width - 100, canvas.height - 100);
-            
-            ctx.strokeStyle = '#764ba2';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(70, 70, canvas.width - 140, canvas.height - 140);
-            
-            if (systemSettings.logo1) {
-                const img1 = new Image();
-                img1.onload = function() {
-                    ctx.drawImage(img1, 100, 80, 80, 80);
-                    drawCertificateContent();
                 };
-                img1.src = systemSettings.logo1;
-            } else {
-                drawCertificateContent();
+                reader.readAsArrayBuffer(file);
             }
-            
-            function drawCertificateContent() {
-                if (systemSettings.logo2) {
-                    const img2 = new Image();
-                    img2.onload = function() {
-                        ctx.drawImage(img2, canvas.width - 180, 80, 80, 80);
-                        finalizeCertificate();
+
+            // Certificate generation
+            function generateDailyCertificate() {
+                if (classes.length === 0) {
+                    alert('لا توجد صفوف لإنشاء شهادة');
+                    return;
+                }
+                const winner = classes.reduce((prev, current) => 
+                    (prev.dailyPoints > current.dailyPoints) ? prev : current
+                );
+                generateCertificate(winner.name, 'نجم الطابور لهذا اليوم');
+            }
+
+            function generateMonthlyCertificate() {
+                if (classes.length === 0) {
+                    alert('لا توجد صفوف لإنشاء شهادة');
+                    return;
+                }
+                const winner = classes.reduce((prev, current) => 
+                    (prev.monthlyPoints > current.monthlyPoints) ? prev : current
+                );
+                generateCertificate(winner.name, 'نجم الطابور لهذا الشهر');
+            }
+
+            function generateTeacherCertificate() {
+                if (teachers.length === 0) {
+                    alert('لا توجد معلمات لإنشاء شهادة');
+                    return;
+                }
+                const winner = teachers.reduce((prev, current) => 
+                    (prev.monthlyPoints > current.monthlyPoints) ? prev : current
+                );
+                generateCertificate(winner.name, 'المعلمة المثالية');
+            }
+
+            function generateCertificate(name, title) {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = 800;
+                canvas.height = 600;
+                
+                const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+                gradient.addColorStop(0, '#667eea');
+                gradient.addColorStop(1, '#764ba2');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                ctx.fillStyle = 'white';
+                ctx.fillRect(50, 50, canvas.width - 100, canvas.height - 100);
+                
+                ctx.strokeStyle = '#667eea';
+                ctx.lineWidth = 5;
+                ctx.strokeRect(50, 50, canvas.width - 100, canvas.height - 100);
+                
+                ctx.strokeStyle = '#764ba2';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(70, 70, canvas.width - 140, canvas.height - 140);
+                
+                if (systemSettings.logo1) {
+                    const img1 = new Image();
+                    img1.onload = function() {
+                        ctx.drawImage(img1, 100, 80, 80, 80);
+                        drawCertificateContent();
                     };
-                    img2.src = systemSettings.logo2;
+                    img1.src = systemSettings.logo1;
                 } else {
-                    finalizeCertificate();
+                    drawCertificateContent();
+                }
+                
+                function drawCertificateContent() {
+                    if (systemSettings.logo2) {
+                        const img2 = new Image();
+                        img2.onload = function() {
+                            ctx.drawImage(img2, canvas.width - 180, 80, 80, 80);
+                            finalizeCertificate();
+                        };
+                        img2.src = systemSettings.logo2;
+                    } else {
+                        finalizeCertificate();
+                    }
+                }
+                
+                function finalizeCertificate() {
+                    ctx.fillStyle = '#667eea';
+                    ctx.font = 'bold 36px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('شهادة تقدير', canvas.width / 2, 200);
+                    
+                    ctx.fillStyle = '#764ba2';
+                    ctx.font = 'bold 24px Arial';
+                    ctx.fillText(title, canvas.width / 2, 250);
+                    
+                    ctx.fillStyle = '#333';
+                    ctx.font = '20px Arial';
+                    ctx.fillText('تُمنح هذه الشهادة إلى:', canvas.width / 2, 320);
+                    
+                    ctx.fillStyle = '#667eea';
+                    ctx.font = 'bold 28px Arial';
+                    ctx.fillText(name, canvas.width / 2, 360);
+                    
+                    ctx.fillStyle = '#333';
+                    ctx.font = '18px Arial';
+                    ctx.fillText(`المديرة: ${systemSettings.principalName}`, canvas.width / 2, 450);
+                    
+                    const today = new Date();
+                    const arabicDate = today.toLocaleDateString('ar-SA');
+                    const englishDate = today.toLocaleDateString('en-US');
+                    
+                    ctx.font = '16px Arial';
+                    ctx.fillText(`التاريخ الهجري: ${arabicDate}`, canvas.width / 2, 480);
+                    ctx.fillText(`التاريخ الميلادي: ${englishDate}`, canvas.width / 2, 500);
+                    
+                    ctx.fillStyle = '#764ba2';
+                    ctx.font = 'bold 20px Arial';
+                    ctx.fillText(systemSettings.title, canvas.width / 2, 530);
+                    
+                    const link = document.createElement('a');
+                    link.download = `شهادة_${name}_${title}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                    
+                    alert(`✅ تم إنشاء شهادة ${title} لـ ${name} كصورة!\n\n🖼️ الشهادة تحتوي على:\n• الشعارات المرفوعة\n• التاريخ الهجري والميلادي\n• اسم المدرسة والمديرة`);
                 }
             }
-            
-            function finalizeCertificate() {
-                ctx.fillStyle = '#667eea';
-                ctx.font = 'bold 36px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText('شهادة تقدير', canvas.width / 2, 200);
-                
-                ctx.fillStyle = '#764ba2';
-                ctx.font = 'bold 24px Arial';
-                ctx.fillText(title, canvas.width / 2, 250);
-                
-                ctx.fillStyle = '#333';
-                ctx.font = '20px Arial';
-                ctx.fillText('تُمنح هذه الشهادة إلى:', canvas.width / 2, 320);
-                
-                ctx.fillStyle = '#667eea';
-                ctx.font = 'bold 28px Arial';
-                ctx.fillText(name, canvas.width / 2, 360);
-                
-                ctx.fillStyle = '#333';
-                ctx.font = '18px Arial';
-                ctx.fillText(`المديرة: ${systemSettings.principalName}`, canvas.width / 2, 450);
-                
-                const today = new Date();
-                const arabicDate = today.toLocaleDateString('ar-SA');
-                const englishDate = today.toLocaleDateString('en-US');
-                
-                ctx.font = '16px Arial';
-                ctx.fillText(`التاريخ الهجري: ${arabicDate}`, canvas.width / 2, 480);
-                ctx.fillText(`التاريخ الميلادي: ${englishDate}`, canvas.width / 2, 500);
-                
-                ctx.fillStyle = '#764ba2';
-                ctx.font = 'bold 20px Arial';
-                ctx.fillText(systemSettings.title, canvas.width / 2, 530);
-                
-                const link = document.createElement('a');
-                link.download = `شهادة_${name}_${title}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-                
-                alert(`✅ تم إنشاء شهادة ${title} لـ ${name} كصورة!\n\n🖼️ الشهادة تحتوي على:\n• الشعارات المرفوعة\n• التاريخ الهجري والميلادي\n• اسم المدرسة والمديرة`);
-            }
-        }
 
         // Export data
         function exportData() {
@@ -1863,14 +1856,3 @@
            
             teachers.forEach((teacher, index) => {
                 const statusTexts = {
-                    present: 'حاضرة',
-                    absent: 'غائبة',
-                    excused: 'بعذر',
-                    late: 'متأخرة'
-                };
-               
-                const statusColors = {
-                    present: 'bg-green-100 text-green-800',
-                    absent: 'bg-red-100 text-red-800',
-                    excused: 'bg-yellow-100 text-yellow-800',
-                    late: 'bg-orange-100 text-orange-800'
