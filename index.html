@@ -479,12 +479,12 @@
     </div>
 
     <script>
-        // --- Supabase Integration ---
+        // --- Supabase Integration (تم التعديل) ---
         const supabaseUrl = 'https://ftyelbhpstwcbipcntcl.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0eWVsYmhwc3R3Y2JpcGNudGNsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5NjQ3NjEsImV4cCI6MjA3MzU0MDc2MX0.j6blHvHBkIQTnD7fbDw0NLQMTZL0ARkJfQmfBKxj2BI';
-        const supabase = createClient(supabaseUrl, supabaseKey);
+        const supabase = Supabase.createClient(supabaseUrl, supabaseKey);
 
-        // --- Global variables ---
+        // --- Global variables (تم التعديل) ---
         let selectedTeacherId = null;
         let teachers = [];
         let classes = [];
@@ -498,7 +498,7 @@
 
         // Initialize the system
         async function init() {
-            await loadData();
+            await loadData(); // تحميل البيانات من Supabase
             updateDateTime();
             setInterval(updateDateTime, 1000);
             renderTeachers();
@@ -724,7 +724,6 @@
                                     <button onclick="updateRating(${classItem.id}, 'speed', ${i})" 
                                             class="w-6 h-6 rounded-full text-xs ${i <= classItem.ratings.speed ? 'bg-blue-400' : 'bg-gray-200'}">
                                         ⚡
-                                    </button>
                             </div>
                         </div>
                        
@@ -735,7 +734,6 @@
                                     <button onclick="updateRating(${classItem.id}, 'alignment', ${i})" 
                                             class="w-6 h-6 rounded-full text-xs ${i <= classItem.ratings.alignment ? 'bg-green-400' : 'bg-gray-200'}">
                                         📏
-                                    </button>
                             </div>
                         </div>
                        
@@ -797,13 +795,6 @@
                     absent: 'bg-gradient-to-r from-red-500 to-red-600',
                     excused: 'bg-gradient-to-r from-yellow-500 to-yellow-600',
                     late: 'bg-gradient-to-r from-orange-500 to-orange-600'
-                };
-               
-                const statusTexts = {
-                    present: 'حاضرة',
-                    absent: 'غائبة',
-                    excused: 'بعذر',
-                    late: 'متأخرة'
                 };
                
                 // Update card background
@@ -876,7 +867,7 @@
                     .from('teachers')
                     .update({ status: 'present' })
                     .eq('id', teacherId);
-                
+               
                 if (error) {
                     console.error('فشل إعادة تعيين المعلمة:', error);
                     alert('فشل إعادة تعيين المعلمة. يرجى المحاولة مرة أخرى.');
@@ -894,12 +885,12 @@
             if (classItem) {
                 classItem.ratings[category] = rating;
                 updateClassPoints(classId);
-                
+               
                 const { error } = await supabase
                     .from('classes')
                     .update({ ratings: classItem.ratings, dailyPoints: classItem.dailyPoints, monthlyPoints: classItem.monthlyPoints })
                     .eq('id', classId);
-                
+               
                 if (error) {
                     console.error('فشل تحديث تقييم الصف:', error);
                     alert('فشل تحديث تقييم الصف. يرجى المحاولة مرة أخرى.');
@@ -1856,3 +1847,7 @@
            
             teachers.forEach((teacher, index) => {
                 const statusTexts = {
+                    present: 'حاضرة',
+                    absent: 'غائبة',
+                    excused: 'بعذر',
+                    late: 'متأخرة'
