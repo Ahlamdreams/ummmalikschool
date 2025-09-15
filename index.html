@@ -479,12 +479,12 @@
     </div>
 
     <script>
-        // --- Supabase Integration (تم التعديل) ---
+        // --- Supabase Integration ---
         const supabaseUrl = 'https://ftyelbhpstwcbipcntcl.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0eWVsYmhwc3R3Y2JpcGNudGNsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5NjQ3NjEsImV4cCI6MjA3MzU0MDc2MX0.j6blHvHBkIQTnD7fbDw0NLQMTZL0ARkJfQmfBKxj2BI';
         const supabase = Supabase.createClient(supabaseUrl, supabaseKey);
 
-        // --- Global variables (تم التعديل) ---
+        // --- Global variables ---
         let selectedTeacherId = null;
         let teachers = [];
         let classes = [];
@@ -498,7 +498,7 @@
 
         // Initialize the system
         async function init() {
-            await loadData(); // تحميل البيانات من Supabase
+            await loadData();
             updateDateTime();
             setInterval(updateDateTime, 1000);
             renderTeachers();
@@ -644,7 +644,7 @@
                             بعذر
                         </button>
                         <button onclick="updateTeacherStatus(${teacher.id}, 'late')" 
-                                class="py-2 px-3 rounded text-white text-sm ${teacher.status === 'late' ? 'bg-orange-600' : 'bg-orange-400'} hover:bg-orange-600">
+                               class="py-2 px-3 rounded text-white text-sm ${teacher.status === 'late' ? 'bg-orange-600' : 'bg-orange-400'} hover:bg-orange-600">
                             متأخرة
                         </button>
                     </div>
@@ -713,7 +713,6 @@
                                     <button onclick="updateRating(${classItem.id}, 'quiet', ${i})" 
                                             class="w-6 h-6 rounded-full text-xs ${i <= classItem.ratings.quiet ? 'bg-yellow-400' : 'bg-gray-200'}">
                                         ⭐
-                                    </button>
                             </div>
                         </div>
                        
@@ -724,6 +723,7 @@
                                     <button onclick="updateRating(${classItem.id}, 'speed', ${i})" 
                                             class="w-6 h-6 rounded-full text-xs ${i <= classItem.ratings.speed ? 'bg-blue-400' : 'bg-gray-200'}">
                                         ⚡
+                            </button>
                             </div>
                         </div>
                        
@@ -734,6 +734,7 @@
                                     <button onclick="updateRating(${classItem.id}, 'alignment', ${i})" 
                                             class="w-6 h-6 rounded-full text-xs ${i <= classItem.ratings.alignment ? 'bg-green-400' : 'bg-gray-200'}">
                                         📏
+                            </button>
                             </div>
                         </div>
                        
@@ -744,6 +745,7 @@
                                     <button onclick="updateRating(${classItem.id}, 'noise', ${i})" 
                                             class="w-6 h-6 rounded-full text-xs ${i <= classItem.ratings.noise ? 'bg-red-400' : 'bg-gray-200'}">
                                         🔊
+                            </button>
                             </div>
                         </div>
                        
@@ -754,6 +756,7 @@
                                     <button onclick="updateRating(${classItem.id}, 'cleanliness', ${i})" 
                                             class="w-6 h-6 rounded-full text-xs ${i <= classItem.ratings.cleanliness ? 'bg-purple-400' : 'bg-gray-200'}">
                                         ✨
+                            </button>
                             </div>
                         </div>
                     </div>
@@ -1448,7 +1451,7 @@
                     link.href = canvas.toDataURL('image/png');
                     link.click();
                     
-                    alert(`✅ تم إنشاء شهادة ${title} لـ ${name} كصورة!\n\n🖼️ الشهادة تحتوي على:\n• الشعارات المرفوعة\n• التاريخ الهجري والميلادي\n• اسم المدرسة والمديرة`);
+                    alert(`✅ تم إنشاء شهادة ${title} لـ ${name} كصورة!\n\n🖼️ الشهادة تحتوي على:\n• الشعارات المرفوعة\n• التاريخ الهجري والميلادي\n• جدول منظم بالبيانات\n• الإحصائيات الكاملة\n• اسم المدرسة والمديرة`);
                 }
             }
 
