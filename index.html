@@ -169,6 +169,7 @@
         .nav-link::after { content: ''; position: absolute; bottom: 0; left: 50%; width: 0; height: 2px; background: linear-gradient(90deg, #f093fb, #f5576c); transition: all 0.3s ease; transform: translateX(-50%); }
         .nav-link:hover::after { width: 80%; }
         .nav-link:hover { background: rgba(255,255,255,0.1); transform: translateY(-2px); }
+        .nav-link.active::after { width: 80%; background: linear-gradient(90deg, #34d399, #10b981); }
 
         .chart-container { position: relative; opacity: 0; transform: translateY(30px); animation: slideInUp 0.8s ease forwards; }
         @keyframes slideInUp { to { opacity: 1; transform: translateY(0); } }
@@ -462,7 +463,7 @@
                     <div class="flex items-center justify-between mb-4">
                         <h4 class="text-lg font-semibold text-white">العرض التفصيلي</h4>
                         <div class="flex space-x-2 space-x-reverse">
-                            <button class="btn-modern text-sm px-3 py-1" onclick="toggleView('grid')" id="gridViewBtn">
+                            <button class="btn-modern text-sm px-3 py-1 bg-white/20" onclick="toggleView('grid')" id="gridViewBtn">
                                 <i class="fas fa-th ml-1"></i>
                                 بطاقات
                             </button>
@@ -473,7 +474,7 @@
                         </div>
                     </div>
                     
-                    <div class="overflow-x-auto" id="teachersTableContainer">
+                    <div class="overflow-x-auto hidden" id="teachersTableContainer">
                         <table class="modern-table w-full">
                             <thead>
                                 <tr>
@@ -675,7 +676,7 @@
                                     <span class="text-white font-medium">مهمة عامة</span>
                                 </div>
                                 <p class="text-white/70 text-sm">
-                                    سيتم توزيع هذه المهمة تلقائياً على جميع المعلمات (<span id="teacherCount">${teachersData.length}</span> معلمة)
+                                    سيتم توزيع هذه المهمة تلقائياً على جميع المعلمات (<span id="teacherCount">0</span> معلمة)
                                 </p>
                             </div>
                         </div>
@@ -791,6 +792,9 @@
         async function fetchDataFromSheet() {
             showLoading();
             try {
+                // ملاحظة: تم التعليق على جلب البيانات من السكربت حالياً للتركيز على عرض البيانات الافتراضية
+                // في حال أردت تفعيل جلب البيانات من شيت جوجل، قم بإزالة التعليق من الأسطر التالية
+                /*
                 const response = await fetch(`${SCRIPT_URL}?type=allData`);
                 const data = await response.json();
 
@@ -827,7 +831,21 @@
                 filteredTasks = [...tasksData];
                 taskIdCounter = tasksData.reduce((max, t) => Math.max(max, t.id), 0) || 0;
                 globalTaskIdCounter = tasksData.filter(t => t.isGlobal).reduce((max, t) => Math.max(max, t.globalTaskId), 0) || 0;
+                */
 
+                // إذا كنت تستخدم البيانات الافتراضية، قم بملء المهام الافتراضية (مثال)
+                if (tasksData.length === 0 && teachersData.length > 0) {
+                     tasksData = [
+                        { id: 1, title: 'إعداد خطة تقوية شهرية', description: 'تجهيز خطة تقوية تفصيلية لشهر أكتوبر', assignee: teachersData[5].name, dueDate: '2025-11-15', priority: 'عالية', status: 'قيد التنفيذ', completedDate: '', createdDate: '2025-10-01', isGlobal: false, globalTaskId: null },
+                        { id: 2, title: 'المبادرة الإبداعية للغة', description: 'تقديم مبادرة لتحسين مستوى القراءة', assignee: teachersData[10].name, dueDate: '2025-10-10', priority: 'عالية', status: 'مكتملة', completedDate: '2025-10-08', createdDate: '2025-09-01', isGlobal: false, globalTaskId: null },
+                        { id: 3, title: 'تحديث سجلات الحضور', description: 'تحديث جميع سجلات حضور الطالبات الأسبوعية', assignee: teachersData[0].name, dueDate: '2025-10-18', priority: 'متوسطة', status: 'قيد التنفيذ', completedDate: '', createdDate: '2025-10-15', isGlobal: false, globalTaskId: null },
+                        { id: 4, title: 'مراجعة المنهج الجديد', description: 'مراجعة الوحدة الأولى من المنهج الجديد', assignee: teachersData[19].name, dueDate: '2025-10-05', priority: 'منخفضة', status: 'متأخرة', completedDate: '', createdDate: '2025-09-20', isGlobal: false, globalTaskId: null },
+                    ];
+                    filteredTasks = [...tasksData];
+                    taskIdCounter = tasksData.reduce((max, t) => Math.max(max, t.id), 0);
+                }
+                
+                // تحديث الواجهة بناءً على البيانات المتوفرة (سواء من الشيت أو الافتراضية)
                 updateKPIs();
                 populateTeachersTable();
                 populateTeachersGrid();
@@ -847,17 +865,22 @@
         }
         
         async function postDataToSheet(data) {
+             showNotification('تم إرسال البيانات (إرسال وهمي). لتفعيل الإرسال الحقيقي، يجب التأكد من نشر Apps Script وتفعيله.', 'info');
+             // يجب تفعيل هذه الأسطر لإرسال البيانات الحقيقي
+             /*
             try {
                 const response = await fetch(SCRIPT_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify(data)
                 });
-                return true;
+                return response.ok;
             } catch (error) {
                 console.error('Post Error:', error);
                 return false;
             }
+            */
+            return true; // إرجاع true للنجاح الوهمي
         }
 
         async function addNewTask(event) {
@@ -938,7 +961,7 @@
         }
         
         // =========================================================================
-        // 3. الدوال المساعدة والمنطق الرئيسي (مع تعديل بسيط ليتناسب مع البيانات الجديدة)
+        // 3. الدوال المساعدة والمنطق الرئيسي 
         // =========================================================================
 
         function populateSelectOptions() {
@@ -950,8 +973,11 @@
             const subjectsSet = new Set();
             
             teacherSelects.forEach(select => {
+                // حفظ الخيار الافتراضي
                 const defaultOption = select.querySelector('option[value=""]')?.cloneNode(true) || document.createElement('option');
-                if (defaultOption.value === "") { defaultOption.textContent = "جميع المعلمات"; }
+                if (defaultOption.value === "") { 
+                    defaultOption.textContent = select.id === 'filterTeacher' ? "جميع المعلمات" : "اختر المعلمة..."; 
+                }
                 select.innerHTML = '';
                 select.appendChild(defaultOption);
 
@@ -988,9 +1014,10 @@
         document.addEventListener('DOMContentLoaded', function() {
             fetchDataFromSheet();
             createCharts();
+            // تفعيل عرض البطاقات كعرض افتراضي
             const gridBtn = document.getElementById('gridViewBtn');
-            if (gridBtn) gridBtn.classList.add('bg-white/20');
             const tableContainer = document.getElementById('teachersTableContainer');
+            if (gridBtn) gridBtn.classList.add('bg-white/20');
             if (tableContainer) tableContainer.classList.add('hidden');
         });
 
@@ -1024,7 +1051,9 @@
         }
 
         function createPerformanceChart() {
-            const ctx = document.getElementById('performanceChart').getContext('2d');
+            const ctx = document.getElementById('performanceChart')?.getContext('2d');
+            if (!ctx) return;
+
             if (performanceChartInstance) { performanceChartInstance.destroy(); }
             
             performanceChartInstance = new Chart(ctx, {
@@ -1034,20 +1063,43 @@
                     datasets: [{
                         label: 'المؤشر الشامل',
                         data: teachersData.map(t => t.overall),
-                        backgroundColor: teachersData.map(() => 'rgba(102, 126, 234, 0.8)'),
-                        borderColor: teachersData.map(() => 'rgba(102, 126, 234, 1)'),
+                        backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                        borderColor: 'rgba(102, 126, 234, 1)',
                         borderWidth: 2,
                         borderRadius: 10
                     }]
                 },
                 options: {
-                    // ... (خيارات المخطط)
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 4.0,
+                            ticks: { color: 'white' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        },
+                        x: {
+                            ticks: { color: 'white' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        }
+                    },
+                    plugins: {
+                        legend: { labels: { color: 'white' } },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.7)',
+                            titleColor: 'white',
+                            bodyColor: 'white'
+                        }
+                    }
                 }
             });
         }
 
         function createLevelsChart() {
-            const ctx = document.getElementById('levelsChart').getContext('2d');
+            const ctx = document.getElementById('levelsChart')?.getContext('2d');
+            if (!ctx) return;
+            
             if (levelsChartInstance) { levelsChartInstance.destroy(); }
             
             const levelCounts = {
@@ -1068,7 +1120,16 @@
                     }]
                 },
                 options: {
-                    // ... (خيارات المخطط)
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right', labels: { color: 'white' } },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.7)',
+                            titleColor: 'white',
+                            bodyColor: 'white'
+                        }
+                    }
                 }
             });
         }
@@ -1076,46 +1137,58 @@
         function updateKPIs() {
             const totalTeachers = teachersData.length;
             const excellentTeachers = teachersData.filter(t => t.level === 'ممتاز').length;
-            const avgOverall = (teachersData.reduce((sum, t) => sum + t.overall, 0) / totalTeachers).toFixed(1);
-            const completionRate = Math.round((excellentTeachers / totalTeachers) * 100);
+            const avgOverall = (teachersData.reduce((sum, t) => sum + t.overall, 0) / totalTeachers) || 0;
+            const completionRate = Math.round((excellentTeachers / totalTeachers) * 100) || 0;
             
             animateValue('totalTeachers', 0, totalTeachers, 1000);
             animateValue('excellentTeachers', 0, excellentTeachers, 1000);
             animateValue('overallIndex', 0, avgOverall, 1000, 1);
             animateValue('completionRate', 0, completionRate, 1000, 0, '%');
             
-            const progressBar = document.querySelector('.kpi-card:nth-child(2) .progress-fill');
-            if (progressBar) progressBar.style.width = `${completionRate}%`;
+            const completionProgressBar = document.querySelector('.kpi-card:nth-child(2) .progress-fill');
+            if (completionProgressBar) completionProgressBar.style.width = `${completionRate}%`;
+            
+            const overallProgressBar = document.querySelector('.kpi-card:nth-child(3) .progress-fill');
+            if (overallProgressBar) overallProgressBar.style.width = `${Math.round((avgOverall / 4.0) * 100)}%`;
+            
+            const excellentProgressBar = document.querySelector('.kpi-card:nth-child(4) .progress-fill');
+            if (excellentProgressBar) excellentProgressBar.style.width = `${Math.round((excellentTeachers / totalTeachers) * 100)}%`;
         }
 
         function animateValue(elementId, start, end, duration, decimals = 0, suffix = '') {
             const element = document.getElementById(elementId);
             if (!element) return;
-            const range = end - start;
-            const increment = range / (duration / 16);
+            
+            // تحويل النهاية إلى رقم معالج
+            const finalEnd = parseFloat(end.toFixed(decimals));
+            const range = finalEnd - start;
+            const stepTime = 16; // تقريباً 60 إطار في الثانية
+            const steps = Math.ceil(duration / stepTime);
+            const increment = range / steps;
             let current = start;
+            let step = 0;
             
             const timer = setInterval(() => {
-                current += increment;
-                if (current >= end) {
-                    current = end;
+                step++;
+                current = start + (increment * step);
+
+                if (step >= steps) {
+                    current = finalEnd;
                     clearInterval(timer);
                     element.style.textShadow = '0 0 20px rgba(255, 255, 255, 0.8)';
                     setTimeout(() => { element.style.textShadow = 'none'; }, 500);
                 }
                 element.textContent = current.toFixed(decimals) + suffix;
-            }, 16);
+            }, stepTime);
         }
 
-        function populateTeachersTable() { /* ... (تم تضمينها في الكود) */ }
-        function populateTeachersGrid() { /* ... (تم تضمينها في الكود) */ }
-        function toggleView(viewType) { /* ... (تم تضمينها في الكود) */ }
         function showLoading() { document.getElementById('loadingOverlay').classList.remove('hidden'); }
         function hideLoading() { document.getElementById('loadingOverlay').classList.add('hidden'); }
         
         function showNotification(message, type) {
             const notification = document.createElement('div');
-            notification.className = `fixed top-6 left-6 z-50 px-6 py-4 rounded-xl text-white font-semibold transform transition-all duration-500 translate-x-full glass-card`;
+            notification.className = `fixed top-6 right-6 z-[60] px-6 py-4 rounded-xl text-white font-semibold transform transition-all duration-500 translate-x-full glass-card`;
+            
             const colors = {
                 success: 'bg-gradient-to-r from-green-500 to-emerald-500',
                 info: 'bg-gradient-to-r from-blue-500 to-cyan-500',
@@ -1124,12 +1197,17 @@
             };
             notification.classList.add(colors[type] || colors.info);
             notification.textContent = message;
+            
             document.body.appendChild(notification);
+            
+            // إظهار الإشعار
             setTimeout(() => notification.classList.remove('translate-x-full'), 100);
+            
+            // إخفاء الإشعار
             setTimeout(() => {
                 notification.classList.add('translate-x-full');
                 setTimeout(() => document.body.removeChild(notification), 500);
-            }, 3000);
+            }, 5000);
         }
         
         function updateTasksStats() {
@@ -1167,6 +1245,8 @@
             const container = document.getElementById('tasksContainer');
             const noTasksMessage = document.getElementById('noTasksMessage');
             
+            if (!container || !noTasksMessage) return;
+
             if (filteredTasks.length === 0) {
                 container.innerHTML = '';
                 noTasksMessage.classList.remove('hidden');
@@ -1177,14 +1257,263 @@
             container.innerHTML = filteredTasks.map(task => createTaskCard(task)).join('');
         }
         
-        // **ملاحظة:** تم حذف دوال: viewDetails, showTeacherFollowUp, createFollowUpContent, createTasksRows, createInitiativesRows,
-        // viewGlobalTaskDetails, closeGlobalTaskDetails, toggleTaskStatusFromGlobal, deleteGlobalTask، 
-        // لأنها تتعلق بورقة المتابعة الفردية (teacherFollowUp) التي تتطلب المزيد من بيانات المبادرات والتقييمات التفصيلية من الشيت.
-        // تم استبدالها بدوال ShowNotification مؤقتاً.
+        // =========================================================================
+        // 4. دوال عرض البيانات في الجداول والبطاقات (تمت الإضافة هنا)
+        // =========================================================================
 
+        function createTeacherCard(teacher) {
+            // دالة مساعدة لإنشاء بطاقة المعلمة
+            const levelClass = getLevelClass(teacher.level);
+            // نفترض أن 4.0 هو الحد الأقصى
+            const progress = Math.round((teacher.overall / 4.0) * 100); 
+            
+            return `
+                <div class="glass-card p-6 kpi-card hover:shadow-2xl transition-all duration-300">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex items-center space-x-4 space-x-reverse">
+                            <div class="w-12 h-12 bg-gradient-to-br from-rose-400 to-pink-500 rounded-full flex items-center justify-center shadow-lg">
+                                <span class="text-xl">👤</span>
+                            </div>
+                            <div>
+                                <p class="text-lg font-bold text-white">${teacher.name}</p>
+                                <p class="text-white/70 text-sm">${teacher.subject}</p>
+                            </div>
+                        </div>
+                        <span class="status-${levelClass}">${teacher.level}</span>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <p class="text-white/80 text-sm mb-1">المؤشر الشامل: ${teacher.overall.toFixed(1)}</p>
+                        <div class="progress-bar">
+                            <div class="progress-fill ${levelClass === 'excellent' ? 'bg-gradient-to-r from-green-400 to-emerald-500' : levelClass === 'good' ? 'bg-gradient-to-r from-yellow-400 to-orange-500' : 'bg-gradient-to-r from-red-400 to-pink-500'}" style="width: ${progress}%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between text-sm text-white/70">
+                        <span>نبض الأداء: <span class="text-white font-medium">${teacher.performance.toFixed(1)}</span></span>
+                        <span>ومضة الإنجاز: <span class="text-white font-medium">${teacher.initiatives.toFixed(1)}</span></span>
+                    </div>
+                    
+                    <button class="btn-modern mt-4 w-full text-sm" onclick="showNotification('تم النقر على عرض التفاصيل. تتطلب هذه الميزة تكاملًا كاملاً لورقة المتابعة الفردية في Apps Script.', 'info')">
+                        <i class="fas fa-search ml-2"></i>
+                        عرض التفاصيل
+                    </button>
+                </div>
+            `;
+        }
+
+        function populateTeachersGrid() {
+            // وظيفة ملء شبكة البطاقات
+            const container = document.getElementById('teachersGrid');
+            if (!container) return;
+            container.innerHTML = teachersData.map(createTeacherCard).join('');
+        }
+
+        function populateTeachersTable() {
+            // وظيفة ملء الجدول التفصيلي
+            const tbody = document.getElementById('teachersTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = teachersData.map(teacher => {
+                const levelClass = getLevelClass(teacher.level);
+                const overallProgress = Math.round((teacher.overall / 4.0) * 100);
+                
+                return `
+                    <tr>
+                        <td class="text-right">${teacher.name}</td>
+                        <td class="text-right">${teacher.subject}</td>
+                        <td class="text-center text-white font-semibold">${teacher.performance.toFixed(1)}</td>
+                        <td class="text-center text-white font-semibold">${teacher.initiatives.toFixed(1)}</td>
+                        <td class="text-center">
+                            <div class="flex items-center justify-center">
+                                <span class="ml-2">${teacher.overall.toFixed(1)}</span>
+                                <div class="progress-bar w-20">
+                                    <div class="progress-fill ${levelClass === 'excellent' ? 'bg-gradient-to-r from-green-400 to-emerald-500' : levelClass === 'good' ? 'bg-gradient-to-r from-yellow-400 to-orange-500' : 'bg-gradient-to-r from-red-400 to-pink-500'}" style="width: ${overallProgress}%"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <span class="status-${levelClass}">${teacher.level}</span>
+                        </td>
+                        <td class="text-center">
+                            <button class="glass-card px-3 py-1 text-sm text-white hover:bg-white/10 rounded-lg" onclick="showNotification('تم النقر على عرض التفاصيل. تتطلب هذه الميزة تكاملًا كاملاً لورقة المتابعة الفردية في Apps Script.', 'info')">
+                                عرض
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function toggleView(viewType) {
+            // وظيفة التبديل بين عرض البطاقات والجدول
+            const gridContainer = document.getElementById('teachersGrid');
+            const tableContainer = document.getElementById('teachersTableContainer');
+            const gridBtn = document.getElementById('gridViewBtn');
+            const tableBtn = document.getElementById('tableViewBtn');
+
+            if (viewType === 'grid') {
+                gridContainer.classList.remove('hidden');
+                tableContainer.classList.add('hidden');
+                gridBtn.classList.add('bg-white/20');
+                tableBtn.classList.remove('bg-white/20');
+            } else {
+                gridContainer.classList.add('hidden');
+                tableContainer.classList.remove('hidden');
+                gridBtn.classList.remove('bg-white/20');
+                tableBtn.classList.add('bg-white/20');
+            }
+        }
+        
         // ... (باقي الدوال الضرورية لعمل لوحة التحكم)
         
+        function animateCard(element) {
+            element.classList.add('icon-pulse');
+            setTimeout(() => {
+                element.classList.remove('icon-pulse');
+            }, 500);
+        }
+
+        function toggleUserMenu() {
+            document.getElementById('userMenu').classList.toggle('hidden');
+        }
+
+        function toggleMobileMenu() {
+            document.getElementById('mobileMenu').classList.toggle('active');
+        }
+
+        function refreshData() {
+            fetchDataFromSheet();
+        }
+
+        function addTeacher() {
+            showNotification('وظيفة إضافة معلمة تتطلب نموذج إدخال وتكامل Apps Script.', 'info');
+        }
+
+        function exportData(reportType = 'all_data') {
+            showNotification(`جاري تحضير تقرير: ${reportType}. تتطلب هذه الوظيفة إعداد نقطة نهاية (endpoint) في Apps Script للتصدير.`, 'info');
+        }
+
+        function filterTasks() {
+            const search = document.getElementById('searchTasks').value.toLowerCase();
+            const status = document.getElementById('filterStatus').value;
+            const priority = document.getElementById('filterPriority').value;
+            const teacherName = document.getElementById('filterTeacher').value;
+
+            filteredTasks = tasksData.filter(task => {
+                const matchesSearch = task.title.toLowerCase().includes(search) || task.description.toLowerCase().includes(search);
+                const matchesStatus = status === '' || task.status === status;
+                const matchesPriority = priority === '' || task.priority === priority;
+                const matchesTeacher = teacherName === '' || task.assignee === teacherName;
+                
+                return matchesSearch && matchesStatus && matchesPriority && matchesTeacher;
+            });
+
+            renderTasks();
+        }
+
+        function clearFilters() {
+            document.getElementById('searchTasks').value = '';
+            document.getElementById('filterStatus').value = '';
+            document.getElementById('filterPriority').value = '';
+            document.getElementById('filterTeacher').value = '';
+            filterTasks();
+        }
+
+        function sortTasks(sortBy) {
+            if (sortBy === 'date') {
+                filteredTasks.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+            } else if (sortBy === 'priority') {
+                const priorityOrder = { 'عالية': 3, 'متوسطة': 2, 'منخفضة': 1 };
+                filteredTasks.sort((a, b) => priorityOrder[b.priority] - priorityOrder[a.priority]);
+            }
+            renderTasks();
+        }
+
+        function createTaskCard(task) {
+            let statusClass = '';
+            let icon = '';
+            let statusBg = '';
+
+            if (task.status === 'مكتملة') {
+                statusClass = 'text-green-400';
+                icon = '✅';
+                statusBg = 'bg-green-500/20';
+            } else if (task.status === 'قيد التنفيذ') {
+                statusClass = 'text-yellow-400';
+                icon = '⏳';
+                statusBg = 'bg-yellow-500/20';
+            } else {
+                statusClass = 'text-red-400';
+                icon = '🚨';
+                statusBg = 'bg-red-500/20';
+            }
+            
+            // حساب التأخير
+            let overdueText = '';
+            const today = new Date();
+            const dueDate = new Date(task.dueDate);
+
+            if (task.status !== 'مكتملة' && dueDate < today) {
+                const diffTime = Math.abs(today - dueDate);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+                overdueText = `<span class="text-xs text-red-500 ml-4">(${diffDays} يوم تأخير)</span>`;
+            }
+
+            return `
+                <div class="glass-card p-4 flex justify-between items-center ${statusBg} border border-white/20 hover:shadow-xl transition-all duration-300">
+                    <div class="flex-1">
+                        <div class="flex items-center mb-1">
+                            <span class="text-lg font-bold text-white ml-2">${icon} ${task.title}</span>
+                            <span class="text-xs px-2 py-1 rounded-full ${statusClass} border border-current font-medium">${task.priority}</span>
+                            ${overdueText}
+                        </div>
+                        <p class="text-white/70 text-sm mb-2">${task.description || 'لا يوجد وصف.'}</p>
+                        <div class="flex items-center text-white/60 text-xs">
+                            <i class="fas fa-user-tag ml-1"></i>
+                            <span class="ml-4">${task.assignee}</span>
+                            <i class="fas fa-calendar-alt ml-1"></i>
+                            <span>تاريخ الاستحقاق: ${task.dueDate}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-2 space-x-reverse">
+                        <button class="glass-card px-3 py-1 text-white hover:bg-white/10 rounded-lg text-sm" onclick="showNotification('وظيفة تعديل المهمة غير مدعومة حاليًا في الواجهة الأمامية.', 'warning')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="glass-card px-3 py-1 text-white hover:bg-white/10 rounded-lg text-sm" onclick="showNotification('وظيفة حذف المهمة غير مدعومة حاليًا في الواجهة الأمامية.', 'warning')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function openAddTaskModal() {
+            document.getElementById('addTaskModal').classList.remove('hidden');
+            // لضمان وجود خيارات المعلمات
+            populateSelectOptions(); 
+        }
+
+        function closeAddTaskModal() {
+            document.getElementById('addTaskModal').classList.add('hidden');
+            document.getElementById('addTaskForm').reset();
+        }
+
+        function toggleGlobalTasksView() {
+            const container = document.getElementById('globalTasksContainer');
+            const toggleText = document.getElementById('globalTasksToggleText');
+            
+            if (container.classList.contains('hidden')) {
+                container.classList.remove('hidden');
+                toggleText.textContent = 'إخفاء المهام العامة';
+                // هنا يجب استدعاء دالة renderGlobalTasks إذا كنت تريد عرضها بشكل منفصل
+                showNotification('تم عرض قسم المهام العامة. العرض الفعلي للمهام يتطلب دالة renderGlobalTasks.', 'info');
+            } else {
+                container.classList.add('hidden');
+                toggleText.textContent = 'عرض المهام العامة';
+            }
+        }
+        
     </script>
-    <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9901d19351ba127c',t:'MTc2MDcyNTMxOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
 </body>
 </html>
