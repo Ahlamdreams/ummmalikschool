@@ -495,6 +495,10 @@
             </div>
         </section>
 
+        <section id="teacherFollowUp" class="section-content hidden">
+            </section>
+
+
         <section id="tracking" class="section-content hidden">
             <div class="glass-card-strong p-8">
                 <div class="flex items-center justify-between mb-6">
@@ -781,9 +785,22 @@
         let filteredTasks = [];
         let taskIdCounter = 0;
         let globalTaskIdCounter = 0;
+
+        // بيانات ورقة المتابعة الفردية الافتراضية
+        let teacherFollowUpData = { 
+            tasks: [
+                { task: 'متابعة سجلات التحضير', assignDate: '2024-01-15', completionDate: '2024-01-17', status: 'مكتمل', speed: 'سريع', performance: 3.9, notes: 'تم الإنجاز في الوقت المحدد مع جودة عالية' },
+                { task: 'تقييم أنشطة الصف', assignDate: '2024-01-20', completionDate: '2024-01-22', status: 'مكتمل', speed: 'متوسط', performance: 3.7, notes: 'تقييم شامل ومفصل' },
+                { task: 'مراجعة خطة التقوية', assignDate: '2024-01-25', completionDate: '', status: 'قيد التنفيذ', speed: '', performance: 0, notes: 'في المراحل الأخيرة' }
+            ], 
+            initiatives: [
+                { id: 1, name: 'مبادرة القراءة التفاعلية', evaluations: [{ period: 'الفترة الأولى', goalClarity: 3.5, innovation: 3.2, studentParticipation: 3.4, impactMeasurement: 3.1, achievementResults: 3.3, date: '2024-09-30', notes: 'بداية جيدة.' }] },
+                { id: 2, name: 'برنامج الرياضيات الممتعة', evaluations: [{ period: 'الفترة الثانية', goalClarity: 3.8, innovation: 3.6, studentParticipation: 3.7, impactMeasurement: 3.5, achievementResults: 3.6, date: '2024-10-15', notes: 'تطور كبير في الأداء.' }] }
+            ] 
+        }; 
         
         // =========================================================================
-        // 2. دوال الربط (Fetch & Post) - تم تعديل POST ليصبح حقيقي
+        // 2. دوال الربط (Fetch & Post)
         // =========================================================================
 
         async function fetchDataFromSheet() {
@@ -791,48 +808,10 @@
             try {
                 
                 // **********************************************
-                // تم إيقاف جلب البيانات من شيت جوجل لضمان بدء التشغيل السريع
-                // قم بإزالة التعليقات لتفعيل الجلب الحقيقي من الرابط
+                // (تم الإبقاء على البيانات الافتراضية للتشغيل السريع)
                 // **********************************************
-                /*
-                const response = await fetch(`${SCRIPT_URL}?type=allData`);
-                const data = await response.json();
-
-                if (data.error) {
-                    throw new Error(data.error);
-                }
-
-                // تحديث بيانات المعلمات والمهام
-                teachersData = data.teachers.map(t => ({
-                    name: t['اسم المعلمة'],
-                    subject: t['التخصص/المادة'],
-                    performance: parseFloat(t['نبضالأداء(متوسطالمهام1-4)']) || 0,
-                    initiatives: parseFloat(t['ومضةالإنجاز(متوسطالمبادرات1-4)']) || 0,
-                    overall: parseFloat(t['المؤشرالشامل']) || 0,
-                    level: t['المستوى']
-                }));
                 
-                // تحديث المهام
-                tasksData = data.tasks.map(t => ({
-                    id: parseInt(t['معرفالمهمة(ID)']),
-                    title: t['عنوانالمهمة'],
-                    description: t['ملاحظاتالمشرف'],
-                    assignee: t['المكلفة(اسمالمعلمة)'],
-                    dueDate: t['تاريخالاستحقاق'],
-                    priority: t['الأولوية'],
-                    status: t['الحالة(مطلوب)'],
-                    completedDate: t['تاريخالإنجازالفعلي'],
-                    createdDate: t['تاريخالتكليف'],
-                    isGlobal: t['هلهيمهمةعامة؟'] === 'نعم',
-                    globalTaskId: t['معرفالمهمةالعامة'] ? parseInt(t['معرفالمهمةالعامة']) : null
-                }));
-
-                // تحديث العدادات وحالة النظام
-                taskIdCounter = tasksData.reduce((max, t) => Math.max(max, t.id), 0) || 0;
-                globalTaskIdCounter = tasksData.filter(t => t.isGlobal).reduce((max, t) => Math.max(max, t.globalTaskId), 0) || 0;
-                */
-
-                // بيانات المهام الافتراضية للمحاكاة (يتم استخدامها إذا لم يتم الجلب من الشيت)
+                // بيانات المهام الافتراضية للمحاكاة
                 if (tasksData.length === 0 && teachersData.length > 0) {
                      tasksData = [
                         { id: 1, title: 'إعداد خطة تقوية شهرية', description: 'تجهيز خطة تقوية تفصيلية لشهر أكتوبر', assignee: teachersData[5].name, dueDate: '2025-11-15', priority: 'عالية', status: 'قيد التنفيذ', completedDate: '', createdDate: '2025-10-01', isGlobal: false, globalTaskId: null },
@@ -844,7 +823,6 @@
                 
                 filteredTasks = [...tasksData];
                 
-                // تحديث الواجهة بناءً على البيانات المتوفرة
                 updateKPIs();
                 populateTeachersTable();
                 populateTeachersGrid();
@@ -856,7 +834,6 @@
 
             } catch (error) {
                 console.error('Fetch Error:', error);
-                // استخدام البيانات الافتراضية إذا فشل الجلب
                 showNotification(`فشل جلب البيانات: ${error.message}. يتم استخدام البيانات الافتراضية.`, 'warning');
             } finally {
                 hideLoading();
@@ -867,7 +844,6 @@
              try {
                 const response = await fetch(SCRIPT_URL, {
                     method: 'POST',
-                    // يجب استخدام 'text/plain;charset=utf-8' لبرنامج Apps Script القديم
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
                     body: JSON.stringify(data)
                 });
@@ -946,14 +922,13 @@
                 const success = await postDataToSheet(task);
                 if (success) {
                     successCount++;
-                    // إضافة المهمة إلى البيانات المحلية بعد النجاح
                     const newTaskObj = {
                         ...task,
-                        id: task.id // استخدام الـ ID المحدث محليًا
+                        id: task.id 
                     };
                     tasksData.unshift(newTaskObj); 
                 } else {
-                    taskIdCounter--; // تراجع عن العداد في حالة فشل الإرسال
+                    taskIdCounter--; 
                 }
             }
             
@@ -971,7 +946,7 @@
         }
         
         // =========================================================================
-        // 3. الدوال المساعدة والمنطق الرئيسي (مع إضافة دوال التفاصيل والتقارير)
+        // 3. الدوال المساعدة والمنطق الرئيسي
         // =========================================================================
 
         function populateSelectOptions() {
@@ -1023,7 +998,6 @@
         document.addEventListener('DOMContentLoaded', function() {
             fetchDataFromSheet();
             createCharts();
-            // تفعيل عرض البطاقات كعرض افتراضي
             const gridBtn = document.getElementById('gridViewBtn');
             const tableContainer = document.getElementById('teachersTableContainer');
             if (gridBtn) gridBtn.classList.add('bg-white/20');
@@ -1039,8 +1013,16 @@
                 link.classList.remove('active');
             });
             const targetLink = document.querySelector(`.nav-link[href="#${sectionName}"]`);
-            if (targetLink) { targetLink.classList.add('active'); }
-            // إخفاء قائمة الجوال عند الانتقال
+            if (targetLink) { 
+                targetLink.classList.add('active'); 
+            } else {
+                // إذا كان القسم هو ورقة المتابعة، نبقي رابط المعلمات نشطاً
+                if (sectionName === 'teacherFollowUp') {
+                     document.querySelector(`.nav-link[href="#teachers"]`).classList.add('active');
+                } else {
+                    document.querySelector(`.nav-link[href="#dashboard"]`)?.classList.add('active');
+                }
+            }
             if (document.getElementById('mobileMenu').classList.contains('active')) {
                 toggleMobileMenu();
             }
@@ -1062,8 +1044,7 @@
             createPerformanceChart();
             createLevelsChart();
         }
-        // ... (بقية دوال إنشاء المخططات، KPI، animation بقيت كما هي وهي تعمل)
-        
+
         function createPerformanceChart() {
             const ctx = document.getElementById('performanceChart')?.getContext('2d');
             if (!ctx) return;
@@ -1147,7 +1128,7 @@
                 }
             });
         }
-        
+
         function updateKPIs() {
             const totalTeachers = teachersData.length;
             const excellentTeachers = teachersData.filter(t => t.level === 'ممتاز').length;
@@ -1175,7 +1156,7 @@
             
             const finalEnd = parseFloat(end.toFixed(decimals));
             const range = finalEnd - start;
-            const stepTime = 16;
+            const stepTime = 16; 
             const steps = Math.ceil(duration / stepTime);
             const increment = range / steps;
             let current = start;
@@ -1269,7 +1250,7 @@
         }
         
         // =========================================================================
-        // 4. دوال عرض البيانات في الجداول والبطاقات (تمت الإضافة هنا)
+        // 4. دوال عرض البيانات في الجداول والبطاقات (تم تحديث viewDetails)
         // =========================================================================
 
         function createTeacherCard(teacher) {
@@ -1371,16 +1352,17 @@
         }
         
         // =========================================================================
-        // 5. دوال الإجراءات الجديدة (التفاصيل والتقارير)
+        // 5. دوال الإجراءات الجديدة (ورقة المتابعة التفصيلية والتقارير)
         // =========================================================================
 
         function viewDetails(teacherName) {
             showLoading();
-            // في الوضع الحقيقي، هنا يجب الاتصال بـ Apps Script لجلب بيانات المتابعة الفردية
             
             const teacher = teachersData.find(t => t.name === teacherName);
 
             if (teacher) {
+                // إغلاق شاشة التحميل بعد العثور على المعلمة
+                hideLoading(); 
                 showTeacherFollowUp(teacher);
             } else {
                 hideLoading();
@@ -1389,78 +1371,293 @@
         }
 
         function showTeacherFollowUp(teacher) {
-            // هذه الدالة تقوم بإنشاء وفتح نافذة عرض التفاصيل (Modal)
-            
-            // 1. إزالة أي نافذة موجودة
-            document.getElementById('followUpModal')?.remove();
-            
-            // 2. تصفية مهام المعلمة للعرض داخل النافذة (محاكاة)
-            const teacherTasks = tasksData.filter(t => t.assignee === teacher.name);
-            const completedCount = teacherTasks.filter(t => t.status === 'مكتملة').length;
-            const pendingCount = teacherTasks.filter(t => t.status === 'قيد التنفيذ').length;
+            // إخفاء جميع أقسام المحتوى وإظهار ورقة المتابعة
+            document.querySelectorAll('.section-content').forEach(section => {
+                section.classList.add('hidden');
+            });
 
-            const tasksList = teacherTasks.length > 0 ? teacherTasks.map(t => 
-                `<li class="flex items-center">
-                    <span class="text-sm ml-2">${t.status === 'مكتملة' ? '✅' : '⏳'}</span>
-                    ${t.title} (<span class="${t.status === 'مكتملة' ? 'text-green-300' : t.status === 'متأخرة' ? 'text-red-400' : 'text-yellow-300'}">${t.status}</span>)
-                </li>`
-            ).join('') : '<p class="text-white/60 text-sm">لا توجد مهام مسجلة حالياً لهذه المعلمة.</p>';
-            
-            const content = `
-                <div id="followUpModal" class="fixed inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center z-[70] p-4">
-                    <div class="glass-card-strong p-8 max-w-4xl w-full mx-auto" style="min-height: 500px;">
-                        <div class="flex items-center justify-between mb-6 border-b border-white/20 pb-4">
-                            <h3 class="text-2xl font-bold text-white">ملف المتابعة للمعلمة: ${teacher.name}</h3>
-                            <button class="text-white/70 hover:text-white" onclick="document.getElementById('followUpModal').remove()">
-                                <i class="fas fa-times text-2xl"></i>
-                            </button>
-                        </div>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                            <div class="glass-card p-4 text-center">
-                                <p class="text-white/70 text-sm">التخصص</p>
-                                <p class="text-xl font-bold text-blue-400">${teacher.subject}</p>
-                            </div>
-                            <div class="glass-card p-4 text-center">
-                                <p class="text-white/70 text-sm">المؤشر الشامل</p>
-                                <p class="text-xl font-bold text-purple-400">${teacher.overall.toFixed(1)}</p>
-                            </div>
-                            <div class="glass-card p-4 text-center">
-                                <p class="text-white/70 text-sm">المستوى</p>
-                                <span class="status-${getLevelClass(teacher.level)}">${teacher.level}</span>
-                            </div>
-                        </div>
+            let followUpSection = document.getElementById('teacherFollowUp');
+            if (!followUpSection) {
+                 followUpSection = document.createElement('section');
+                 followUpSection.id = 'teacherFollowUp';
+                 followUpSection.className = 'section-content';
+                 document.querySelector('main').appendChild(followUpSection);
+            }
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="glass-card p-4 bg-green-500/10 border-green-400/30">
-                                <h4 class="text-lg font-semibold text-white mb-3 flex items-center"><i class="fas fa-tasks ml-2"></i> ملخص المهام</h4>
-                                <p class="text-white/70 text-sm">المكتملة: <span class="text-green-300">${completedCount}</span> / قيد التنفيذ: <span class="text-yellow-300">${pendingCount}</span></p>
-                                <ul class="text-white/80 space-y-2 mt-4 max-h-40 overflow-y-auto">
-                                    ${tasksList}
-                                </ul>
+            // ملء محتوى ورقة المتابعة
+            followUpSection.innerHTML = createFollowUpContent(teacher);
+            followUpSection.classList.remove('hidden');
+            
+            // تحديث شريط التنقل (تحديد "قائمة المعلمات")
+            document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+            document.querySelector(`.nav-link[href="#teachers"]`)?.classList.add('active');
+
+            // تحديث المؤشرات داخل ورقة المتابعة
+            updateFollowUpMetrics();
+            showNotification(`تم تحميل ملف متابعة المعلمة: ${teacher.name}`, 'info');
+        }
+
+        function createFollowUpContent(teacher) {
+            const tasksAverage = calculateTasksAverage();
+            const initiativesAverage = calculateInitiativesAverage();
+            const overallIndex = ((parseFloat(tasksAverage) + parseFloat(initiativesAverage)) / 2).toFixed(1);
+            
+            return `
+                <div class="glass-card-strong p-8 mb-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <button class="btn-modern" onclick="showSection('dashboard')">
+                            <i class="fas fa-arrow-right ml-2"></i>
+                            العودة للوحة القيادة
+                        </button>
+                        <h2 class="text-2xl font-bold text-white text-center flex-1">
+                            ورقة متابعة المعلمة - ${teacher.name}
+                        </h2>
+                        <button class="btn-modern" onclick="printFollowUp()">
+                            <i class="fas fa-print ml-2"></i>
+                            طباعة
+                        </button>
+                    </div>
+                    
+                    <div class="glass-card p-6 mb-8">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                            <div class="text-center glass-card p-4">
+                                <p class="text-white/70 text-sm mb-1">التخصص</p>
+                                <div class="text-2xl font-bold text-pink-400">${teacher.subject}</div>
                             </div>
-                            
-                            <div class="glass-card p-4 bg-purple-500/10 border-purple-400/30">
-                                <h4 class="text-lg font-semibold text-white mb-3 flex items-center"><i class="fas fa-lightbulb ml-2"></i> ومضة الإنجاز (المبادرات)</h4>
-                                <p class="text-white/70 text-sm mb-2">متوسط تقييم المبادرات: <span class="text-pink-300">${teacher.initiatives.toFixed(1)}</span></p>
-                                <ul class="text-white/80 space-y-2 text-sm">
-                                    <li>⭐ تقييم الأداء: <span class="text-pink-300">${teacher.performance.toFixed(1)}</span></li>
-                                    <li>💡 مبادرة إثرائية: تم تنفيذها بنجاح.</li>
-                                    <li>📚 مشروع القراءة: تقييم عالي.</li>
-                                </ul>
-                                <button class="btn-modern text-xs mt-4 px-3 py-1" onclick="showNotification('هنا ستظهر صفحة إدخال تقييمات المشرفة التفصيلية.', 'info')">
-                                    تقييم المشرفة
-                                </button>
+                            <div class="text-center glass-card p-4">
+                                <p class="text-white/70 text-sm mb-1">متوسط الأداء العام</p>
+                                <div class="text-2xl font-bold text-blue-400" id="tasksAvg">${tasksAverage}</div>
+                            </div>
+                            <div class="text-center glass-card p-4">
+                                <p class="text-white/70 text-sm mb-1">متوسط المبادرات</p>
+                                <div class="text-2xl font-bold text-green-400" id="initiativesAvg">${initiativesAverage}</div>
+                            </div>
+                            <div class="text-center glass-card p-4">
+                                <p class="text-white/70 text-sm mb-1">المؤشر الشامل</p>
+                                <div class="text-2xl font-bold text-purple-400" id="overallIndexFU">${overallIndex}</div>
                             </div>
                         </div>
                     </div>
                 </div>
-            `;
 
-            document.body.insertAdjacentHTML('beforeend', content);
+                <div class="glass-card-strong p-6 mb-8">
+                    <h3 class="text-xl font-bold text-white mb-6 flex items-center">
+                        <i class="fas fa-tasks ml-3 text-blue-400"></i>
+                        متابعة المهام والأداء
+                    </h3>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="modern-table w-full">
+                            <thead>
+                                <tr>
+                                    <th class="text-right">المهمة</th>
+                                    <th class="text-center">تاريخ التكليف</th>
+                                    <th class="text-center">تاريخ الإنجاز</th>
+                                    <th class="text-center">الحالة</th>
+                                    <th class="text-center">سرعة الإنجاز</th>
+                                    <th class="text-center">تقييم الأداء (1-4)</th>
+                                    <th class="text-right">ملاحظات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tasksTableBodyFU">
+                                ${createTasksRows(teacher.name)}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="mt-6 flex justify-between items-center">
+                        <button class="btn-modern" onclick="openAddTaskModal()">
+                            <i class="fas fa-plus ml-2"></i>
+                            إضافة مهمة جديدة
+                        </button>
+                        <div class="text-white">
+                            <span class="text-white/70">إجمالي المهام: </span>
+                            <span class="font-bold">${tasksData.filter(t => t.assignee === teacher.name).length}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card-strong p-6">
+                    <h3 class="text-xl font-bold text-white mb-6 flex items-center">
+                        <i class="fas fa-lightbulb ml-3 text-yellow-400"></i>
+                        متابعة المبادرات والابتكار
+                    </h3>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="modern-table w-full">
+                            <thead>
+                                <tr>
+                                    <th class="text-right">اسم المبادرة</th>
+                                    <th class="text-center">فترة التقييم</th>
+                                    <th class="text-center">وضوح الهدف (1-4)</th>
+                                    <th class="text-center">الابتكار (1-4)</th>
+                                    <th class="text-center">مشاركة الطالبات (1-4)</th>
+                                    <th class="text-center">قياس الأثر (1-4)</th>
+                                    <th class="text-center">نتائج التحصيل (1-4)</th>
+                                    <th class="text-center">متوسط الفترة</th>
+                                    <th class="text-center">التاريخ</th>
+                                    <th class="text-right">ملاحظات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="initiativesTableBodyFU">
+                                ${createInitiativesRows()}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="mt-6 flex justify-between items-center flex-wrap gap-4">
+                        <div class="flex space-x-3 space-x-reverse">
+                            <button class="btn-modern" onclick="showNotification('سيتم إضافة مبادرة جديدة قريباً!', 'info')">
+                                <i class="fas fa-plus ml-2"></i>
+                                إضافة مبادرة جديدة
+                            </button>
+                            <button class="btn-modern bg-gradient-to-r from-green-500 to-emerald-500" onclick="showNotification('سيتم إضافة تقييم فترة جديدة للمبادرة المحددة!', 'info')">
+                                <i class="fas fa-calendar-plus ml-2"></i>
+                                إضافة تقييم فترة جديدة
+                            </button>
+                        </div>
+                        <div class="text-white">
+                            <span class="text-white/70">إجمالي المبادرات: </span>
+                            <span class="font-bold">${teacherFollowUpData.initiatives.length}</span>
+                            <span class="text-white/70 mr-4">إجمالي التقييمات: </span>
+                            <span class="font-bold">${teacherFollowUpData.initiatives.reduce((total, init) => total + init.evaluations.length, 0)}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function createTasksRows(teacherName) {
+            // دمج المهام الحقيقية مع بيانات المتابعة الوهمية
+            const teacherTasks = tasksData.filter(t => t.assignee === teacherName);
+            let allTasks = [...teacherFollowUpData.tasks.filter(t => t.task !== 'مراجعة خطة التقوية')];
             
-            hideLoading();
-            showNotification(`تم تحميل ملف متابعة المعلمة: ${teacher.name}`, 'info');
+            teacherTasks.forEach(task => {
+                const isOverdue = new Date(task.dueDate) < new Date() && task.status !== 'مكتملة';
+                const statusText = isOverdue ? 'متأخر' : (task.status === 'مكتملة' ? 'مكتمل' : 'قيد التنفيذ');
+
+                allTasks.push({
+                    task: task.title,
+                    assignDate: task.createdDate,
+                    completionDate: task.completedDate,
+                    status: statusText,
+                    speed: task.status === 'مكتملة' ? 'سريع' : (isOverdue ? 'متأخر' : '-'),
+                    performance: task.status === 'مكتملة' ? 3.5 : 0, // قيمة وهمية للتقييم
+                    notes: task.description,
+                    isGlobal: task.isGlobal,
+                    priority: task.priority
+                });
+            });
+            
+            return allTasks.map(task => `
+                <tr class="${task.isGlobal ? 'bg-blue-500/10 border-l-4 border-blue-400' : ''}">
+                    <td class="font-medium">
+                        ${task.task}
+                        ${task.isGlobal ? '<span class="text-xs text-blue-400 block">مهمة عامة</span>' : ''}
+                        ${task.priority ? `<span class="text-xs px-2 py-1 rounded-full ${getPriorityClass(task.priority)} mt-1 inline-block">${task.priority}</span>` : ''}
+                    </td>
+                    <td class="text-center">${task.assignDate}</td>
+                    <td class="text-center">${task.completionDate || '-'}</td>
+                    <td class="text-center">
+                        <span class="status-${getStatusClass(task.status)}">${task.status}</span>
+                    </td>
+                    <td class="text-center">${task.speed || '-'}</td>
+                    <td class="text-center font-bold ${getPerformanceColor(task.performance)}">${task.performance.toFixed(1) || '-'}</td>
+                    <td class="text-right">${task.notes}</td>
+                </tr>
+            `).join('');
+        }
+
+        function createInitiativesRows() {
+            let rows = '';
+            
+            teacherFollowUpData.initiatives.forEach(initiative => {
+                initiative.evaluations.forEach((evaluation, evalIndex) => {
+                    const average = ((evaluation.goalClarity + evaluation.innovation + evaluation.studentParticipation + evaluation.impactMeasurement + evaluation.achievementResults) / 5).toFixed(1);
+                    
+                    rows += `
+                        <tr class="hover:bg-white/5">
+                            ${evalIndex === 0 ? `<td rowspan="${initiative.evaluations.length}" class="font-medium border-l-4 border-yellow-400 bg-white/5">${initiative.name}</td>` : ''}
+                            <td class="text-center font-medium text-blue-300">${evaluation.period}</td>
+                            <td class="text-center font-bold ${getPerformanceColor(evaluation.goalClarity)}">${evaluation.goalClarity.toFixed(1)}</td>
+                            <td class="text-center font-bold ${getPerformanceColor(evaluation.innovation)}">${evaluation.innovation.toFixed(1)}</td>
+                            <td class="text-center font-bold ${getPerformanceColor(evaluation.studentParticipation)}">${evaluation.studentParticipation.toFixed(1)}</td>
+                            <td class="text-center font-bold ${getPerformanceColor(evaluation.impactMeasurement)}">${evaluation.impactMeasurement.toFixed(1)}</td>
+                            <td class="text-center font-bold ${getPerformanceColor(evaluation.achievementResults)}">${evaluation.achievementResults.toFixed(1)}</td>
+                            <td class="text-center font-bold ${getPerformanceColor(parseFloat(average))} bg-white/10">${average}</td>
+                            <td class="text-center text-sm">${evaluation.date}</td>
+                            <td class="text-right text-sm">${evaluation.notes}</td>
+                        </tr>
+                    `;
+                });
+                
+                if (initiative !== teacherFollowUpData.initiatives[teacherFollowUpData.initiatives.length - 1]) {
+                    rows += '<tr><td colspan="10" class="border-t-2 border-white/20 p-1"></td></tr>';
+                }
+            });
+            
+            return rows;
+        }
+        
+        function getStatusClass(status) {
+            switch(status) {
+                case 'مكتمل': return 'excellent';
+                case 'قيد التنفيذ': return 'good';
+                case 'متأخر': return 'needs-improvement';
+                default: return 'needs-improvement';
+            }
+        }
+        
+        function getPerformanceColor(score) {
+            if (score >= 3.5) return 'text-green-400';
+            if (score >= 3.0) return 'text-yellow-400';
+            if (score >= 2.0) return 'text-orange-400';
+            return 'text-red-400';
+        }
+
+        function calculateTasksAverage() {
+            // نحسب المتوسط بناءً على المهام المكتملة في البيانات الوهمية
+            const completedTasks = teacherFollowUpData.tasks.filter(task => task.performance > 0);
+            if (completedTasks.length === 0) return '0.0';
+            const sum = completedTasks.reduce((total, task) => total + task.performance, 0);
+            return (sum / completedTasks.length).toFixed(1);
+        }
+
+        function calculateInitiativesAverage() {
+            if (teacherFollowUpData.initiatives.length === 0) return '0.0';
+            
+            let totalSum = 0;
+            let totalEvaluations = 0;
+            
+            teacherFollowUpData.initiatives.forEach(initiative => {
+                initiative.evaluations.forEach(evaluation => {
+                    const evaluationAverage = (evaluation.goalClarity + evaluation.innovation + evaluation.studentParticipation + evaluation.impactMeasurement + evaluation.achievementResults) / 5;
+                    totalSum += evaluationAverage;
+                    totalEvaluations++;
+                });
+            });
+            
+            return totalEvaluations > 0 ? (totalSum / totalEvaluations).toFixed(1) : '0.0';
+        }
+
+        function updateFollowUpMetrics() {
+             // هذه الدالة ستحدث الأرقام في ورقة المتابعة بعد تحميلها
+             const tasksAvg = calculateTasksAverage();
+             const initiativesAvg = calculateInitiativesAverage();
+             const overallIndex = ((parseFloat(tasksAvg) + parseFloat(initiativesAvg)) / 2).toFixed(1);
+
+             document.getElementById('tasksAvg').textContent = tasksAvg;
+             document.getElementById('initiativesAvg').textContent = initiativesAvg;
+             document.getElementById('overallIndexFU').textContent = overallIndex;
+        }
+
+        function backToDashboard() {
+            showSection('dashboard');
+        }
+
+        function printFollowUp() {
+            showNotification('سيتم طباعة ورقة المتابعة...', 'info');
+            // هنا يمكنك إضافة منطق الطباعة (window.print()) إذا أردت تفعيلها.
         }
 
         function exportData(reportType = 'all_data') {
@@ -1470,9 +1667,6 @@
 
             showNotification(`جاري تحضير ${reportName} للتحميل.`, 'success');
 
-            // **********************************************
-            // محاكاة تنزيل ملف CSV
-            // **********************************************
             const dummyData = "Name,Overall Index,Level\n" + teachersData.map(t => `${t.name},${t.overall.toFixed(1)},${t.level}`).join('\n');
             
             const tempLink = document.createElement('a');
@@ -1518,8 +1712,11 @@
                 const matchesStatus = status === '' || task.status === status;
                 const matchesPriority = priority === '' || task.priority === priority;
                 const matchesTeacher = teacherName === '' || task.assignee === teacherName;
+
+                const isOverdue = new Date(task.dueDate) < new Date() && task.status !== 'مكتملة';
+                const matchesOverdue = status === 'متأخرة' && isOverdue;
                 
-                return matchesSearch && matchesStatus && matchesPriority && matchesTeacher;
+                return matchesSearch && (matchesStatus || matchesOverdue) && matchesPriority && matchesTeacher;
             });
 
             renderTasks();
@@ -1548,26 +1745,30 @@
             let icon = '';
             let statusBg = '';
 
+            const isOverdue = new Date(task.dueDate) < new Date() && task.status !== 'مكتملة';
+
             if (task.status === 'مكتملة') {
                 statusClass = 'text-green-400';
                 icon = '✅';
                 statusBg = 'bg-green-500/20';
+            } else if (isOverdue) {
+                statusClass = 'text-red-400';
+                icon = '🚨';
+                statusBg = 'bg-red-500/20';
             } else if (task.status === 'قيد التنفيذ') {
                 statusClass = 'text-yellow-400';
                 icon = '⏳';
                 statusBg = 'bg-yellow-500/20';
             } else {
-                statusClass = 'text-red-400';
-                icon = '🚨';
-                statusBg = 'bg-red-500/20';
+                 statusClass = 'text-gray-400';
+                 icon = '📋';
+                 statusBg = 'bg-gray-500/20';
             }
-            
-            // حساب التأخير
-            let overdueText = '';
-            const today = new Date();
-            const dueDate = new Date(task.dueDate);
 
-            if (task.status !== 'مكتملة' && dueDate < today) {
+            let overdueText = '';
+            if (isOverdue) {
+                const today = new Date();
+                const dueDate = new Date(task.dueDate);
                 const diffTime = Math.abs(today - dueDate);
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
                 overdueText = `<span class="text-xs text-red-500 ml-4">(${diffDays} يوم تأخير)</span>`;
@@ -1578,7 +1779,7 @@
                     <div class="flex-1">
                         <div class="flex items-center mb-1">
                             <span class="text-lg font-bold text-white ml-2">${icon} ${task.title}</span>
-                            <span class="text-xs px-2 py-1 rounded-full ${statusClass} border border-current font-medium">${task.priority}</span>
+                            <span class="text-xs px-2 py-1 rounded-full ${getPriorityClass(task.priority)} font-medium">${task.priority}</span>
                             ${overdueText}
                         </div>
                         <p class="text-white/70 text-sm mb-2">${task.description || 'لا يوجد وصف.'}</p>
@@ -1604,6 +1805,8 @@
 
         function openAddTaskModal() {
             document.getElementById('addTaskModal').classList.remove('hidden');
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('taskDueDate').min = today;
             populateSelectOptions(); 
         }
 
@@ -1626,6 +1829,14 @@
             }
         }
         
+        function getPriorityClass(priority) {
+            switch(priority) {
+                case 'عالية': return 'bg-red-100 text-red-800';
+                case 'متوسطة': return 'bg-yellow-100 text-yellow-800';
+                case 'منخفضة': return 'bg-green-100 text-green-800';
+                default: return 'bg-gray-100 text-gray-800';
+            }
+        }
     </script>
 </body>
 </html>
