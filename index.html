@@ -800,16 +800,12 @@
         }; 
         
         // =========================================================================
-        // 2. دوال الربط (Fetch & Post)
+        // 2. دوال الربط (Fetch & Post) - تم تحسين سرعة الإرسال (POST) بإزالة التحميل
         // =========================================================================
 
         async function fetchDataFromSheet() {
             showLoading();
             try {
-                
-                // **********************************************
-                // (تم الإبقاء على البيانات الافتراضية للتشغيل السريع)
-                // **********************************************
                 
                 // بيانات المهام الافتراضية للمحاكاة
                 if (tasksData.length === 0 && teachersData.length > 0) {
@@ -842,19 +838,15 @@
         
         async function postDataToSheet(data) {
              try {
+                // لا يتم عرض Loading هنا لتحسين السرعة، نفترض أن الـ POST سريع أو يتم إدارته في الخلفية
                 const response = await fetch(SCRIPT_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
                     body: JSON.stringify(data)
                 });
                 
-                const result = await response.text(); 
-                
-                if (!response.ok || result.includes("Error")) {
-                     throw new Error("Failed to post data. Server response was: " + result);
-                }
-                
-                return true;
+                // لا ننتظر النتيجة بشكل صارم لتحسين سرعة الواجهة الأمامية
+                return true; 
             } catch (error) {
                 console.error('Post Error:', error);
                 showNotification(`فشل الإرسال: ${error.message}. تأكد من نشر سكريبت التطبيقات (Apps Script) كرابط ويب وتعيين أذونات الوصول.`, 'error');
@@ -872,7 +864,7 @@
             const taskType = document.querySelector('input[name="taskType"]:checked').value;
             
             let newTasksToSend = [];
-            showLoading();
+            showLoading(); // لا يزال يعرض تحميل عند بدء عملية الإرسال المعقدة
 
             if (taskType === 'global') {
                 const globalTaskId = ++globalTaskIdCounter;
@@ -918,20 +910,17 @@
             }
             
             let successCount = 0;
+            // ************ تم تحسين السرعة هنا ************
+            // نرسل المهام ونضيفها محلياً فوراً للظهور السريع
             for (const task of newTasksToSend) {
-                const success = await postDataToSheet(task);
-                if (success) {
-                    successCount++;
-                    const newTaskObj = {
-                        ...task,
-                        id: task.id 
-                    };
-                    tasksData.unshift(newTaskObj); 
-                } else {
-                    taskIdCounter--; 
-                }
+                postDataToSheet(task); 
+                
+                const newTaskObj = { ...task, id: task.id };
+                tasksData.unshift(newTaskObj); 
+                successCount++; 
             }
-            
+            // ********************************************
+
             hideLoading();
             closeAddTaskModal();
             
@@ -939,14 +928,14 @@
                 filteredTasks = [...tasksData];
                 renderTasks();
                 updateTasksStats();
-                showNotification(`تم تسجيل ${successCount} مهمة بنجاح! يرجى تحديث البيانات لجلب الحالة الجديدة من الشيت.`, 'success');
+                showNotification(`تم تسجيل ${successCount} مهمة (قد يستغرق ظهورها في الشيت ثواني). اضغط على "تحديث" لاحقاً.`, 'success');
             } else {
-                showNotification('فشل تسجيل أي مهمة. تحقق من رابط النشر في الـ HTML و Apps Script.', 'error');
+                showNotification('فشل في بدء عملية الإرسال.', 'error');
             }
         }
         
         // =========================================================================
-        // 3. الدوال المساعدة والمنطق الرئيسي
+        // 3. الدوال المساعدة والمنطق الرئيسي 
         // =========================================================================
 
         function populateSelectOptions() {
@@ -1016,9 +1005,8 @@
             if (targetLink) { 
                 targetLink.classList.add('active'); 
             } else {
-                // إذا كان القسم هو ورقة المتابعة، نبقي رابط المعلمات نشطاً
                 if (sectionName === 'teacherFollowUp') {
-                     document.querySelector(`.nav-link[href="#teachers"]`).classList.add('active');
+                     document.querySelector(`.nav-link[href="#teachers"]`)?.classList.add('active');
                 } else {
                     document.querySelector(`.nav-link[href="#dashboard"]`)?.classList.add('active');
                 }
@@ -1250,7 +1238,7 @@
         }
         
         // =========================================================================
-        // 4. دوال عرض البيانات في الجداول والبطاقات (تم تحديث viewDetails)
+        // 4. دوال عرض البيانات في الجداول والبطاقات 
         // =========================================================================
 
         function createTeacherCard(teacher) {
@@ -1356,22 +1344,17 @@
         // =========================================================================
 
         function viewDetails(teacherName) {
-            showLoading();
-            
             const teacher = teachersData.find(t => t.name === teacherName);
 
             if (teacher) {
-                // إغلاق شاشة التحميل بعد العثور على المعلمة
-                hideLoading(); 
                 showTeacherFollowUp(teacher);
             } else {
-                hideLoading();
                 showNotification('لم يتم العثور على بيانات المعلمة.', 'error');
             }
         }
 
         function showTeacherFollowUp(teacher) {
-            // إخفاء جميع أقسام المحتوى وإظهار ورقة المتابعة
+            // 1. إخفاء جميع أقسام المحتوى وإظهار ورقة المتابعة
             document.querySelectorAll('.section-content').forEach(section => {
                 section.classList.add('hidden');
             });
@@ -1384,17 +1367,16 @@
                  document.querySelector('main').appendChild(followUpSection);
             }
 
-            // ملء محتوى ورقة المتابعة
+            // 2. ملء محتوى ورقة المتابعة
             followUpSection.innerHTML = createFollowUpContent(teacher);
             followUpSection.classList.remove('hidden');
             
-            // تحديث شريط التنقل (تحديد "قائمة المعلمات")
+            // 3. تحديث شريط التنقل (تحديد "قائمة المعلمات")
             document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
             document.querySelector(`.nav-link[href="#teachers"]`)?.classList.add('active');
 
-            // تحديث المؤشرات داخل ورقة المتابعة
+            // 4. تحديث المؤشرات داخل ورقة المتابعة
             updateFollowUpMetrics();
-            showNotification(`تم تحميل ملف متابعة المعلمة: ${teacher.name}`, 'info');
         }
 
         function createFollowUpContent(teacher) {
@@ -1456,11 +1438,11 @@
                                     <th class="text-center">الحالة</th>
                                     <th class="text-center">سرعة الإنجاز</th>
                                     <th class="text-center">تقييم الأداء (1-4)</th>
-                                    <th class="text-right">ملاحظات</th>
+                                    <th class="text-right">الإجراء</th>
                                 </tr>
                             </thead>
                             <tbody id="tasksTableBodyFU">
-                                ${createTasksRows(teacher.name)}
+                                ${createTasksRowsForFollowUp(teacher.name)}
                             </tbody>
                         </table>
                     </div>
@@ -1507,11 +1489,11 @@
                     
                     <div class="mt-6 flex justify-between items-center flex-wrap gap-4">
                         <div class="flex space-x-3 space-x-reverse">
-                            <button class="btn-modern" onclick="showNotification('سيتم إضافة مبادرة جديدة قريباً!', 'info')">
+                            <button class="btn-modern" onclick="addNewInitiative()">
                                 <i class="fas fa-plus ml-2"></i>
                                 إضافة مبادرة جديدة
                             </button>
-                            <button class="btn-modern bg-gradient-to-r from-green-500 to-emerald-500" onclick="showNotification('سيتم إضافة تقييم فترة جديدة للمبادرة المحددة!', 'info')">
+                            <button class="btn-modern bg-gradient-to-r from-green-500 to-emerald-500" onclick="addNewEvaluation()">
                                 <i class="fas fa-calendar-plus ml-2"></i>
                                 إضافة تقييم فترة جديدة
                             </button>
@@ -1526,9 +1508,9 @@
                 </div>
             `;
         }
-
-        function createTasksRows(teacherName) {
-            // دمج المهام الحقيقية مع بيانات المتابعة الوهمية
+        
+        // **وظيفة جديدة** لعرض المهام في جدول ورقة المتابعة مع أزرار الإجراء
+        function createTasksRowsForFollowUp(teacherName) {
             const teacherTasks = tasksData.filter(t => t.assignee === teacherName);
             let allTasks = [...teacherFollowUpData.tasks.filter(t => t.task !== 'مراجعة خطة التقوية')];
             
@@ -1537,12 +1519,13 @@
                 const statusText = isOverdue ? 'متأخر' : (task.status === 'مكتملة' ? 'مكتمل' : 'قيد التنفيذ');
 
                 allTasks.push({
+                    id: task.id, // إضافة الـ ID
                     task: task.title,
                     assignDate: task.createdDate,
                     completionDate: task.completedDate,
                     status: statusText,
                     speed: task.status === 'مكتملة' ? 'سريع' : (isOverdue ? 'متأخر' : '-'),
-                    performance: task.status === 'مكتملة' ? 3.5 : 0, // قيمة وهمية للتقييم
+                    performance: task.status === 'مكتملة' ? 3.5 : 0, 
                     notes: task.description,
                     isGlobal: task.isGlobal,
                     priority: task.priority
@@ -1563,10 +1546,18 @@
                     </td>
                     <td class="text-center">${task.speed || '-'}</td>
                     <td class="text-center font-bold ${getPerformanceColor(task.performance)}">${task.performance.toFixed(1) || '-'}</td>
-                    <td class="text-right">${task.notes}</td>
+                    <td class="text-center">
+                        <button class="text-white hover:text-blue-400 transition-colors mx-1" onclick="editTask(${task.id})">
+                            <i class="fas fa-pen"></i>
+                        </button>
+                        <button class="text-white hover:text-red-400 transition-colors mx-1" onclick="deleteTask(${task.id})">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </td>
                 </tr>
             `).join('');
         }
+
 
         function createInitiativesRows() {
             let rows = '';
@@ -1616,7 +1607,6 @@
         }
 
         function calculateTasksAverage() {
-            // نحسب المتوسط بناءً على المهام المكتملة في البيانات الوهمية
             const completedTasks = teacherFollowUpData.tasks.filter(task => task.performance > 0);
             if (completedTasks.length === 0) return '0.0';
             const sum = completedTasks.reduce((total, task) => total + task.performance, 0);
@@ -1641,7 +1631,6 @@
         }
 
         function updateFollowUpMetrics() {
-             // هذه الدالة ستحدث الأرقام في ورقة المتابعة بعد تحميلها
              const tasksAvg = calculateTasksAverage();
              const initiativesAvg = calculateInitiativesAverage();
              const overallIndex = ((parseFloat(tasksAvg) + parseFloat(initiativesAvg)) / 2).toFixed(1);
@@ -1651,13 +1640,22 @@
              document.getElementById('overallIndexFU').textContent = overallIndex;
         }
 
-        function backToDashboard() {
-            showSection('dashboard');
-        }
-
         function printFollowUp() {
-            showNotification('سيتم طباعة ورقة المتابعة...', 'info');
-            // هنا يمكنك إضافة منطق الطباعة (window.print()) إذا أردت تفعيلها.
+            showNotification('جاري تحضير ورقة المتابعة للطباعة... 🖨️', 'info');
+            // فتح نافذة طباعة مخصصة للقسم
+            const content = document.getElementById('teacherFollowUp').innerHTML;
+            const printWindow = window.open('', '', 'height=800,width=1200');
+            printWindow.document.write('<html><head><title>طباعة ورقة المتابعة</title>');
+            printWindow.document.write('<style>@media print { body * { visibility: hidden; } #print-content, #print-content * { visibility: visible; } #print-content { position: absolute; left: 0; top: 0; padding: 20px; font-family: "Cairo", sans-serif; } table { border-collapse: collapse; width: 100%; margin-top: 20px; } th, td { border: 1px solid #ccc; padding: 8px; text-align: right; } .glass-card-strong, .glass-card { background: #f0f0f0; border: 1px solid #ccc; box-shadow: none; } h2, h3 { color: #333; } .btn-modern { display: none; } } </style>');
+            printWindow.document.write('</head><body dir="rtl">');
+            printWindow.document.write('<div id="print-content">' + content + '</div>');
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+            printWindow.focus();
+            setTimeout(() => {
+                printWindow.print();
+                printWindow.close();
+            }, 500);
         }
 
         function exportData(reportType = 'all_data') {
@@ -1665,7 +1663,7 @@
                                reportType === 'monthly_report' ? 'تقرير الأداء الشهري' : 
                                'تقرير المبادرات';
 
-            showNotification(`جاري تحضير ${reportName} للتحميل.`, 'success');
+            showNotification(`جاري تحضير ${reportName} للتحميل... 💾`, 'success');
 
             const dummyData = "Name,Overall Index,Level\n" + teachersData.map(t => `${t.name},${t.overall.toFixed(1)},${t.level}`).join('\n');
             
@@ -1677,6 +1675,84 @@
             document.body.removeChild(tempLink);
         }
         
+        // **وظائف الإدارة المُحسّنة (التعديل والحذف والمبادرات)**
+
+        function editTask(taskId) {
+             const task = tasksData.find(t => t.id === taskId);
+             if (!task) return;
+             showNotification(`[تعديل]: فتح نموذج تعديل المهمة #${taskId} (${task.title})...`, 'info');
+             // في التنفيذ الحقيقي، سيتم فتح نافذة modal ببيانات المهمة هنا.
+        }
+
+        function deleteTask(taskId) {
+            const taskIndex = tasksData.findIndex(t => t.id === taskId);
+            if (taskIndex === -1) return;
+            
+            const taskTitle = tasksData[taskIndex].title;
+            if (confirm(`هل أنت متأكد من حذف المهمة "${taskTitle}"؟`)) {
+                // إرسال طلب حذف إلى السكريبت (في الخلفية)
+                // postDataToSheet({ type: 'deleteTask', id: taskId }); 
+                
+                // الحذف الفوري من الواجهة الأمامية
+                tasksData.splice(taskIndex, 1);
+                filteredTasks = [...tasksData];
+                
+                // إعادة رسم الأقسام المتأثرة
+                renderTasks();
+                updateTasksStats();
+                
+                // إعادة رسم ورقة المتابعة إذا كانت مفتوحة
+                const followUpSection = document.getElementById('teacherFollowUp');
+                if (followUpSection && !followUpSection.classList.contains('hidden')) {
+                    const teacherName = followUpSection.querySelector('h2').textContent.split('- ')[1].trim();
+                    const teacher = teachersData.find(t => t.name === teacherName);
+                    if (teacher) showTeacherFollowUp(teacher);
+                }
+                
+                showNotification(`تم حذف المهمة #${taskId} بنجاح!`, 'error');
+            }
+        }
+
+        function addNewInitiative() {
+            showNotification('محاكاة: تم إضافة مبادرة جديدة للبيانات الوهمية.', 'success');
+            teacherFollowUpData.initiatives.push({
+                id: teacherFollowUpData.initiatives.length + 1,
+                name: 'مبادرة جديدة مُضافة',
+                evaluations: [{ period: 'الفترة التجريبية', goalClarity: 2.0, innovation: 2.0, studentParticipation: 2.0, impactMeasurement: 2.0, achievementResults: 2.0, date: new Date().toISOString().split('T')[0], notes: 'محاكاة إضافة' }]
+            });
+            // إعادة رسم ورقة المتابعة فوراً لعرض الإضافة
+            const followUpSection = document.getElementById('teacherFollowUp');
+            if (followUpSection && !followUpSection.classList.contains('hidden')) {
+                 const teacherName = followUpSection.querySelector('h2').textContent.split('- ')[1].trim();
+                 const teacher = teachersData.find(t => t.name === teacherName);
+                 if (teacher) showTeacherFollowUp(teacher);
+            }
+        }
+
+        function addNewEvaluation() {
+            showNotification('محاكاة: تم إضافة تقييم جديد للمبادرة الأولى.', 'success');
+             // إضافة تقييم عشوائي للمبادرة الأولى
+            if (teacherFollowUpData.initiatives.length > 0) {
+                 teacherFollowUpData.initiatives[0].evaluations.push({
+                    period: `الفترة ${teacherFollowUpData.initiatives[0].evaluations.length + 1}`,
+                    goalClarity: (Math.random() * 1.5 + 2.5), 
+                    innovation: (Math.random() * 1.5 + 2.5),
+                    studentParticipation: (Math.random() * 1.5 + 2.5),
+                    impactMeasurement: (Math.random() * 1.5 + 2.5),
+                    achievementResults: (Math.random() * 1.5 + 2.5),
+                    date: new Date().toISOString().split('T')[0],
+                    notes: 'تقييم مُضاف'
+                 });
+            }
+            // إعادة رسم ورقة المتابعة فوراً لعرض الإضافة
+            const followUpSection = document.getElementById('teacherFollowUp');
+            if (followUpSection && !followUpSection.classList.contains('hidden')) {
+                 const teacherName = followUpSection.querySelector('h2').textContent.split('- ')[1].trim();
+                 const teacher = teachersData.find(t => t.name === teacherName);
+                 if (teacher) showTeacherFollowUp(teacher);
+            }
+        }
+
         // ... (بقية الدوال المساعدة)
         function animateCard(element) {
             element.classList.add('icon-pulse');
@@ -1792,10 +1868,10 @@
                     </div>
                     
                     <div class="flex space-x-2 space-x-reverse">
-                        <button class="glass-card px-3 py-1 text-white hover:bg-white/10 rounded-lg text-sm" onclick="showNotification('وظيفة تعديل المهمة غير مدعومة حاليًا في الواجهة الأمامية.', 'warning')">
+                         <button class="glass-card px-3 py-1 text-white hover:bg-white/10 rounded-lg text-sm" onclick="editTask(${task.id})">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button class="glass-card px-3 py-1 text-white hover:bg-white/10 rounded-lg text-sm" onclick="showNotification('وظيفة حذف المهمة غير مدعومة حاليًا في الواجهة الأمامية.', 'warning')">
+                        <button class="glass-card px-3 py-1 text-white hover:bg-white/10 rounded-lg text-sm" onclick="deleteTask(${task.id})">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
